@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link charset="utf-8" href="css/ui-lightness/jquery-ui-1.10.3.custom.css" rel="stylesheet">
+<script type="text/javascript" charset="utf-8" src="js/jquery-1.9.1.js"></script>
+<script type="text/javascript" charset="utf-8" src="js/jquery-ui-1.10.3.custom.min.js"></script>
+<script>
+$(function() {
+	$( "#seek" ).slider({
+		range: "max",
+		min: 1,
+		max: 100,
+		value: 1,
+		slide: function( event, ui ) {
+			$( "#sec" ).val( ui.value );
+			var sec = parseInt( ui.value ) * 1000;
+			mysound.seekTo(sec);
+			
+			}
+	});
+});	
+</script>
+<style type="text/css">
+	button {
+		padding: 20px;
+	}
+	div {
+		font-size: 20px;
+	}
+</style>
+</head>
+<body>
+	<button type="button" id="play">[播放音樂Play]</button>
+	<button type="button" id="pause">[暫停Pause]</button>
+	<button type="button" id="stop">[停止Stop]</button>
+	<br/>
+	跳到Jump to <span id="sec"></span> 播放 
+	<div id="seek"></div>
+	<div id="position"></div>
+	<div id="length"></div>
+	
+	
+	<script type="text/javascript" charset="utf-8" src="phonegap.js"></script>
+	
+	<script type="text/javascript" charset="utf-8">
+	// 全域變數。
+	var mysound = null;
+	var mediaTimer = null;
+	var mylength = 0;
+	var pos = 0;
+	var ispause = flase;  //按下暫停鈕 就改成true
+	document.addEventListener("deviceready", onDeviceReady, false);
+	function onDeviceReady() {
+	};
+
+	// 按下播放按鈕後會觸發這個函數。
+	$("#play").click(function(){
+		playMp3("http://audio.ibeat.org/content/enoe/enoe_-_Summertime.mp3");
+		//playMp3("https://doc-0k-3c-docs.googleusercontent.com/docs/securesc/ha0ro937gcuc7l7deffksulhg5h7mbp1/jvmudi878a07414i4pvb0ml9p8df76kl/1384581600000/18071599767864527519/*/0B56Lqhj4JeqYTXV1QUdlNDlmVmc?h=16653014193614665626&e=download");
+	});
+	// 按下停止按鈕後會觸發這個函數。
+	$("#stop").click(function(){
+		StopMp3();
+	});
+	// 按下暫停後會觸發這個函數。
+	$("#pause").click(function(){
+		ispause = true;
+		PauseMp3();
+	});
+	function playMp3(src) {
+		// 建立Media實例。
+		mysound = new Media(src, onSuccess, onError);		
+		// 播放。
+		mysound.play();
+
+		// 使用setInterval函數，每1秒更新一次最新的播放位置。
+		if (mediaTimer == null) {
+			mediaTimer = setInterval(function() {
+				
+				// 使用getCurrentPosition取得最新播放位置。
+				mysound.getCurrentPosition(
+					// success callback函數。
+					onSuccess,
+					// error callback函數。
+					onError
+				);
+			}, 1000);
+		}
+	};
+	function PauseMp3(){
+		// 建立Media實例。
+		mysound = new Media(src, onSuccess, onError);
+		
+		if (ispause == flase){
+				// 暫停播放。
+				mysound.pause();
+				ispause = true;
+		}
+		else{
+				ispause = flase;
+				pos = position;
+				mysound.seekTo(pos);
+		};
+	};
+	// 操作成功時觸發此函數，並帶入position變數，變數內是最新的播放位置。
+	function onSuccess(position){
+		if (position > -1) {
+			$("#position").html( position + " 秒(s)" );
+			mylength = mysound.getDuration();
+			$("#length").html( "時間time：" + mylength + " 秒(s)" );
+			
+			// 更新slider bar的長度
+			$( "#sec" ).slider("option", "max", parseInt(mylength) );
+		};
+	};
+
+	// 操作失敗時觸發此函數。
+	function onError(err){
+		console.log("發生錯誤err：" + err);
+	};
+
+	// 停止播放音樂
+	function StopMp3() {
+		// 判斷 mysound 變數是否為空值。
+		if (mysound) {
+			// 停止播放
+			mysound.stop();
+			// 釋放資源
+			mysound.release();
+		}
+		
+		// 停止Interval。
+		clearInterval(mediaTimer);
+		mediaTimer = null;
+	};
+
+	</script>
+<div>note : the operation speed depend on network quality.</div>
+
+</body>
+
+</html>
